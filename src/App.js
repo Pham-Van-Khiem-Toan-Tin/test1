@@ -12,6 +12,7 @@ function App() {
   const [favorite, setFavorite] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [datafilter, setDatafilter] = useState([]);
+  const [sort, setSort] = useState("");
   const [data, setData] = useState(null);
   useEffect(() => {
     fetch("/ListBook.json")
@@ -52,38 +53,54 @@ function App() {
     setData([...data, newBook]);
   };
   const handleSearchData = () => {
-    if(keyword != null && keyword.trim != ''){
-      const filteredData = data.filter(item => {
+    if (keyword != null && keyword.trim != "") {
+      const filteredData = data.filter((item) => {
         // Nếu data là null hoặc không có trường name và author, trả về false
         if (!item || !item.name || !item.author) {
           return false;
         }
-      
+
         // Tạo biến regex từ từ khóa tìm kiếm (searchTerm)
-        const regex = new RegExp(keyword, 'gi');
-      
+        const regex = new RegExp(keyword, "gi");
+
         // Sử dụng regex để kiểm tra xem name hoặc author có chứa searchTerm không
         return item.name.match(regex) || item.author.match(regex);
       });
       setDatafilter(filteredData);
-
-    } else{
+    } else {
       setDatafilter(data);
     }
-  }
+  };
   const handleSortData = (e) => {
-    if (e.target.value === "name") {
-      
-    }
-    if (e.target.value === "author") {
-      
-    }
-  }
+    setSort(e.target.value);
+    const sortBy = e.target.value;
+
+    const sortedData = [...data];
+    sortedData.sort((a, b) => {
+      const fieldA =
+        sortBy === "name" ? a.name.toUpperCase() : a.author.toUpperCase();
+      const fieldB =
+        sortBy === "name" ? b.name.toUpperCase() : b.author.toUpperCase();
+
+      if (fieldA < fieldB) {
+        return -1;
+      }
+      if (fieldA > fieldB) {
+        return 1;
+      }
+      return 0;
+    });
+    setDatafilter(sortedData);
+  };
   return (
-    <div className="App">
+    <div className="App mt-5">
       <div className="container d-flex flex-column ">
         <div className="input-group flex-nowrap">
-          <span onClick={handleSearchData} className="input-group-text" id="addon-wrapping">
+          <span
+            onClick={handleSearchData}
+            className="input-group-text"
+            id="addon-wrapping"
+          >
             <FaSearch />
           </span>
           <input
@@ -92,6 +109,7 @@ function App() {
             placeholder="keyword..."
             aria-label="keyword"
             aria-describedby="addon-wrapping"
+            value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
         </div>
@@ -108,9 +126,16 @@ function App() {
               </li>
             ))}
         </ul>
-        <select className="form-select">
-          <option value="name" key="">Name</option>
-          <option value="author" key="">Author</option>
+        <select className="form-select mt-3" value={sort} onChange={handleSortData}>
+          <option value="" key="">
+            Accessing
+          </option>
+          <option value="name" key="">
+            Name
+          </option>
+          <option value="author" key="">
+            Author
+          </option>
         </select>
         <h4 className="mt-4">Add new book</h4>
         <div className="mb-3">
