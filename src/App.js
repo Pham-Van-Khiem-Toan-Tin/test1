@@ -44,38 +44,41 @@ function App() {
       newBook["name"] = name;
       newBook["author"] = author;
       newBook["favorite"] = favorite.toString();
-    }
-    const jsonBlob = new Blob([JSON.stringify([...data, newBook])], {
-      type: "application/json",
-    });
+      const jsonBlob = new Blob([JSON.stringify([...data, newBook])], {
+        type: "application/json",
+      });
 
-    saveAs(jsonBlob, "ListBook.json");
-    setData([...data, newBook]);
+      saveAs(jsonBlob, "ListBook.json");
+      setData([...data, newBook]);
+    } else {
+    }
+  };
+  const searchData = () => {
+    return data.filter((item) => {
+      // Nếu data là null hoặc không có trường name và author, trả về false
+      if (!item || !item.name || !item.author) {
+        return false;
+      }
+
+      // Tạo biến regex từ từ khóa tìm kiếm (searchTerm)
+      const regex = new RegExp(keyword, "gi");
+
+      // Sử dụng regex để kiểm tra xem name hoặc author có chứa searchTerm không
+      return item.name.match(regex) || item.author.match(regex);
+    });
   };
   const handleSearchData = () => {
     if (keyword != null && keyword.trim != "") {
-      const filteredData = data.filter((item) => {
-        // Nếu data là null hoặc không có trường name và author, trả về false
-        if (!item || !item.name || !item.author) {
-          return false;
-        }
-
-        // Tạo biến regex từ từ khóa tìm kiếm (searchTerm)
-        const regex = new RegExp(keyword, "gi");
-
-        // Sử dụng regex để kiểm tra xem name hoặc author có chứa searchTerm không
-        return item.name.match(regex) || item.author.match(regex);
-      });
+      const filteredData = searchData();
       setDatafilter(filteredData);
     } else {
       setDatafilter(data);
     }
   };
-  const handleSortData = (e) => {
-    setSort(e.target.value);
-    const sortBy = e.target.value;
+  const sortData = (resultSearch, typeSort) => {
+    const sortBy = typeSort;
 
-    const sortedData = [...data];
+    const sortedData = [...resultSearch];
     sortedData.sort((a, b) => {
       const fieldA =
         sortBy === "name" ? a.name.toUpperCase() : a.author.toUpperCase();
@@ -90,6 +93,13 @@ function App() {
       }
       return 0;
     });
+    return sortedData;
+  }
+  const handleSortData = (e) => {
+    setSort(e.target.value);
+    const sortBy = e.target.value;
+    const resultSearch = searchData();
+    const sortedData = sortData(resultSearch, sortBy);
     setDatafilter(sortedData);
   };
   return (
@@ -126,7 +136,11 @@ function App() {
               </li>
             ))}
         </ul>
-        <select className="form-select mt-3" value={sort} onChange={handleSortData}>
+        <select
+          className="form-select mt-3"
+          value={sort}
+          onChange={handleSortData}
+        >
           <option value="" key="">
             Accessing
           </option>
