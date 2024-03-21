@@ -4,10 +4,14 @@ import * as bootstrap from "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import { useEffect, useState } from "react";
+import { saveAs } from "filesaver.js-npm";
+
 function App() {
   const [name, setName] = useState("");
   const [author, setAuthor] = useState("");
   const [favorite, setFavorite] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [datafilter, setDatafilter] = useState([]);
   const [data, setData] = useState(null);
   useEffect(() => {
     fetch("/ListBook.json")
@@ -21,7 +25,7 @@ function App() {
       .then((jsonData) => {
         // Gán dữ liệu từ response vào biến data
         setData(jsonData);
-      
+        setDatafilter(jsonData);
       })
       .catch((error) => {
         console.error("There was a problem with the fetch operation:", error);
@@ -40,27 +44,61 @@ function App() {
       newBook["author"] = author;
       newBook["favorite"] = favorite.toString();
     }
+    const jsonBlob = new Blob([JSON.stringify([...data, newBook])], {
+      type: "application/json",
+    });
+
+    saveAs(jsonBlob, "ListBook.json");
     setData([...data, newBook]);
   };
+  const handleSearchData = () => {
+    if(keyword != null && keyword.trim != ''){
+      const filteredData = data.filter(item => {
+        // Nếu data là null hoặc không có trường name và author, trả về false
+        if (!item || !item.name || !item.author) {
+          return false;
+        }
+      
+        // Tạo biến regex từ từ khóa tìm kiếm (searchTerm)
+        const regex = new RegExp(keyword, 'gi');
+      
+        // Sử dụng regex để kiểm tra xem name hoặc author có chứa searchTerm không
+        return item.name.match(regex) || item.author.match(regex);
+      });
+      setDatafilter(filteredData);
+
+    } else{
+      setDatafilter(data);
+    }
+  }
+  const handleSortData = (e) => {
+    if (e.target.value === "name") {
+      
+    }
+    if (e.target.value === "author") {
+      
+    }
+  }
   return (
     <div className="App">
       <div className="container d-flex flex-column ">
         <div className="input-group flex-nowrap">
-          <span className="input-group-text" id="addon-wrapping">
+          <span onClick={handleSearchData} className="input-group-text" id="addon-wrapping">
             <FaSearch />
           </span>
           <input
             type="text"
             className="form-control"
-            placeholder="Username"
-            aria-label="Username"
+            placeholder="keyword..."
+            aria-label="keyword"
             aria-describedby="addon-wrapping"
+            onChange={(e) => setKeyword(e.target.value)}
           />
         </div>
         <h4 className="mt-4">A list of Book</h4>
         <ul className="list-group">
-          {data &&
-            data.map((item) => (
+          {datafilter &&
+            datafilter.map((item) => (
               <li className="list-group-item d-flex justify-content-between align-items-center">
                 <div className="start d-flex gap-3 align-items-center">
                   {item?.favotite == "true" && <FaStar className="d-block" />}{" "}
@@ -70,6 +108,10 @@ function App() {
               </li>
             ))}
         </ul>
+        <select className="form-select">
+          <option value="name" key="">Name</option>
+          <option value="author" key="">Author</option>
+        </select>
         <h4 className="mt-4">Add new book</h4>
         <div className="mb-3">
           <label htmlFor="title" className="form-label">
